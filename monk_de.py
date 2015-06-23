@@ -178,21 +178,23 @@ def create(project, project_path=None, repo_path=None, venv_path=None, sources=N
     ppath = project_path or op.expanduser("~/monk_de")
     rpath = repo_path or "repos"
     vpath = venv_path or "venvs"
+    internal_backup = op.join(ppath, project, "config.ini")
     sources = sources or [
-        op.expanduser("."),
-        op.expanduser("~"),
-        ppath,
+        internal_backup,
+        op.join(op.expanduser("."), project+".ini"),
+        op.join(op.expanduser("~"), project+".ini"),
     ]
     config = cp.ConfigParser()
     comment("sources: {}".format(sources))
     for src in sources:
-        ini_file = op.join(
-            src,
-            project+".ini",
-        )
-        if op.isfile(ini_file):
-            comment("found src '{}', loading...".format(ini_file))
-            config.read(ini_file)
+        if op.isfile(src):
+            comment("found src '{}', loading...".format(src))
+            config.read(src)
+            if src != internal_backup:
+                os.system("mkdir -p $(dirname {})".format(internal_backup))
+                out = os.system("cp {} {}".format(src, internal_backup))
+                if out != 0:
+                    raise Exception("backing up the ini file failed")
             break
 
     print("#!/bin/bash")
@@ -245,7 +247,7 @@ def main():
         print("----debug output go-----")
         print(buff.getvalue())
         print("----debug output end----")
-    shell_file = op.join(args.project_path, args.project+".sh")
+    shell_file = op.join(args.project_path, args.project, "start.sh")
     os.system("mkdir -p $(dirname {})".format(shell_file))
     with open(shell_file,"w") as f:
         f.write(buff.getvalue())

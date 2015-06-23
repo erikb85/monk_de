@@ -30,7 +30,7 @@ def read(name):
         return ""
 
 project = "monk_de"
-version = "0.3"
+version = "0.3.1"
 setup(
     name=project,
     version=version,
